@@ -88,6 +88,32 @@ def get_timetable():
     except Exception as e:
         raise Exception(f"Timetable fetch failed: {str(e)}")
 
+def login_to_portal():
+    driver.switch_to.frame('zohoiam')
+    driver.find_element(By.ID, "login_id").send_keys(username)  # username
+    driver.find_element(By.ID, "nextbtn").click()
+    password_element = WebDriverWait(driver, 30).until(
+        EC.visibility_of_element_located((By.ID, "password")))
+    password_element.send_keys(password) # password
+    button = WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.ID, "nextbtn")))
+    button.click()
+
+
+def get_attendance():
+    global driver
+    if driver is None:
+        raise Exception("")
+
+    try:
+        driver.get("https://academia.srmist.edu.in/#Page:My_Attendance")
+        login_to_portal()
+        table = driver.find_element_by_xpath("""//*[@id="zc-viewcontainer_My_Attendance"]/div/div[4]/div/table[3]""")
+        attendance_data = table.text
+        return jsonify({"status": "success", "data": attendance_data})
+
+    except Exception as e:
+        raise Exception(f"Attendance fetch failed: {str(e)}")
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -102,6 +128,11 @@ def login():
             return jsonify({'message': str(e)}), 500
     else:
         return jsonify({'message': 'Invalid credentials'}), 401
+
+
+@app.route('/attendance', methods=['POST'])
+def attendance():
+    return get_attendance()
 
 
 @app.route('/timetable', methods=['GET'])
